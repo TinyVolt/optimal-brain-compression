@@ -19,3 +19,6 @@ def check_if_square_and_same_shape(x:torch.Tensor, y:torch.Tensor):
 
 def check_if_first_n_dims_match(x:torch.Tensor, y:torch.Tensor, n:int):
     assert x.shape[:n] == y.shape[:n], f'Expected the first {n} dimensions of `x` and `y` to match, but got {x.shape[:n]} and {y.shape[:n]}.'
+
+def check_if_same_ndim(x:torch.Tensor, y:torch.Tensor):
+    assert x.ndim == y.ndim, f'Expected `x` and `y` to have the same number of dimensions, but got {x.ndim} and {y.ndim}.'

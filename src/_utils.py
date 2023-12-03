@@ -1,7 +1,7 @@
 import torch
 from typing import Union
 
-from _checks import check_if_first_n_dims_match, check_if_square, check_if_ndim
+from _checks import check_if_first_n_dims_match, check_if_square, check_if_ndim, check_if_same_ndim
 
 def invert_spd_matrix(matrix:torch.Tensor) -> torch.Tensor:
     '''
@@ -62,12 +62,68 @@ def calculate_inverse_after_row_column_removal(
         # `columns.unsqueeze(-1) @ rows.unsqueeze(-2)`: (bs,n,1) @ (bs,1,n) -> (bs,n,n)
         return inverse_matrix - columns.unsqueeze(-1) @ rows.unsqueeze(-2)
 
-def quantize(x:torch.Tensor, scales:torch.Tensor, zeros:torch.Tensor, maxq:Union[torch.Tensor,int]) -> torch.Tensor:
+def quantize(x:torch.Tensor, scales:torch.Tensor, rounded_zeros:torch.Tensor, max_quantized_value:int) -> torch.Tensor:
     '''
     1. scale, round, shift then clamp
     2. undo shift and scale operations
     3. return the final output
+
+    `x` is a tensor of shape (n_rows, n_cols)
+    `scales` is a tensor of shape (n_rows, 1)
+    `rounded_zeros` is a tensor of shape (n_rows, 1)
+    Output is a tensor of shape (n_rows, n_cols)
     '''
+    check_if_same_ndim(x, scales)
+    check_if_same_ndim(x, rounded_zeros)
     rounded_x = torch.round(x / scales)
-    quantized_x = (rounded_x + zeros).clamp(0, maxq)
-    return scales * (quantized_x - zeros)
+    quantized_x = (rounded_x + rounded_zeros).clamp(0, max_quantized_value)
+    return scales * (quantized_x - rounded_zeros)
+
+def find_optimal_scales_and_zeros(matrix:torch.Tensor, max_quantized_value:int, *, grid_range:int=80, norm=2.4):
+    '''
+    `matrix` is a tensor of shape (n_rows, n_cols)
+    `max_quantized_value` is an integer = 2 ** n_bits - 1
+
+    Outputs:
+    - `scales` is a tensor of shape (n_rows,)
+    - `rounded_zeros` is a tensor of shape (n_rows,)
+
+    Implementation of [this code](https://github.com/yhhhli/BRECQ/blob/e455d62e93c70351961f8991c913b59435bd165f/quant/quant_layer.py#L116-L130) from the BRECQ repository. But it calculates the scales and zeros for all the rows at once.
+    '''
+    check_if_ndim(matrix, 2)
+    n_rows = matrix.shape[0]
+    zero_num_rows = torch.zeros(n_rows, device=matrix.device)
+    # min_values_per_row and max_values_per_row are tensors of shape (n_rows,)
+    min_values_per_row = torch.minimum(matrix.min(dim=1).values, zero_num_rows)
+    max_values_per_row = torch.maximum(matrix.max(dim=1).values, zero_num_rows)
+    indices_of_all_zero_rows = (min_values_per_row == 0) & (max_values_per_row == 0)
+    min_values_per_row[indices_of_all_zero_rows] = -1
+    max_values_per_row[indices_of_all_zero_rows] = 1
+
+    scales = (max_values_per_row - min_values_per_row) / max_quantized_value
+    rounded_zeros = torch.round(-min_values_per_row / scales)
+
+    distances_quantized_and_full_precision = torch.full((n_rows,), float('inf'), device=matrix.device)
+
+    for i in range(grid_range):
+        shrink_factor = 1 - i / grid_range
+        shrunken_min_values_per_row = min_values_per_row * shrink_factor
+        shrunken_max_values_per_row = max_values_per_row * shrink_factor
+        shrunken_scales = (shrunken_max_values_per_row - shrunken_min_values_per_row) / max_quantized_value
+        shrunken_rounded_zeros = torch.round(-shrunken_min_values_per_row / shrunken_scales)
+        # quantized_matrix has shape (n_rows, n_cols)
+        quantized_matrix = quantize(
+            matrix, 
+            shrunken_scales.unsqueeze(-1), 
+            shrunken_rounded_zeros.unsqueeze(-1), 
+            max_quantized_value
+        )
+        # shrunked_distances has shape (n_rows,)
+        shrunked_distances = torch.norm(quantized_matrix - matrix, p=norm, dim=1)
+        # Update the scales and rounded_zeros if shrunked_distances is smaller
+        rows_to_update = shrunked_distances < distances_quantized_and_full_precision
+        distances_quantized_and_full_precision[rows_to_update] = shrunked_distances[rows_to_update]
+        scales[rows_to_update] = shrunken_scales[rows_to_update]
+        rounded_zeros[rows_to_update] = shrunken_rounded_zeros[rows_to_update]
+
+    return scales, rounded_zeros
