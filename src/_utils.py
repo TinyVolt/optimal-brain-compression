@@ -118,11 +118,11 @@ def find_optimal_scales_and_zeros(matrix:torch.Tensor, max_quantized_value:int, 
             shrunken_rounded_zeros.unsqueeze(-1), 
             max_quantized_value
         )
-        # shrunked_distances has shape (n_rows,)
-        shrunked_distances = torch.norm(quantized_matrix - matrix, p=norm, dim=1)
+        # shrunken_distances has shape (n_rows,)
+        shrunken_distances = torch.norm(quantized_matrix - matrix, p=norm, dim=1)
         # Update the scales and rounded_zeros if shrunked_distances is smaller
-        rows_to_update = shrunked_distances < distances_quantized_and_full_precision
-        distances_quantized_and_full_precision[rows_to_update] = shrunked_distances[rows_to_update]
+        rows_to_update = shrunken_distances < distances_quantized_and_full_precision
+        distances_quantized_and_full_precision[rows_to_update] = shrunken_distances[rows_to_update]
         scales[rows_to_update] = shrunken_scales[rows_to_update]
         rounded_zeros[rows_to_update] = shrunken_rounded_zeros[rows_to_update]
 
