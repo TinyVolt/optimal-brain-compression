@@ -49,18 +49,26 @@ def calculate_inverse_after_row_column_removal(
 
     batch_arange = torch.arange(inverse_matrix.size(0), device=inverse_matrix.device)
 
-    # (bs,n,n) -> (bs,n) -> (bs,) -> sqrt -> (bs,1)
-    diagonal_entries_sqrt = inverse_matrix.diagonal(dim1=-2, dim2=-1)[batch_arange, indices].sqrt().unsqueeze(-1)
+    # (bs,n,n) -> (bs,n) -> (bs,) -> (bs,1)
+    diagonal_entries = inverse_matrix.diagonal(dim1=-2, dim2=-1)[batch_arange, indices].unsqueeze(-1)
+    # (bs,1) -> (bs,1,1)
+    diagonal_entries_signs = diagonal_entries.sign().unsqueeze(-1)
+    # (bs,1)
+    diagonal_entries_sqrt = diagonal_entries.abs().sqrt()
     # `columns` has shape (bs, n)
     columns = inverse_matrix[batch_arange, :, indices].div(diagonal_entries_sqrt)
 
     if is_symmetric:
         # `columns.unsqueeze(-1) @ columns.unsqueeze(-2)`: (bs,n,1) @ (bs,1,n) -> (bs,n,n)
-        return inverse_matrix - columns.unsqueeze(-1) @ columns.unsqueeze(-2)
+        to_substract = columns.unsqueeze(-1) @ columns.unsqueeze(-2)
+        to_substract.mul_(diagonal_entries_signs)
+        return inverse_matrix - to_substract
     else:
         rows = inverse_matrix[batch_arange, indices, :].div(diagonal_entries_sqrt)
         # `columns.unsqueeze(-1) @ rows.unsqueeze(-2)`: (bs,n,1) @ (bs,1,n) -> (bs,n,n)
-        return inverse_matrix - columns.unsqueeze(-1) @ rows.unsqueeze(-2)
+        to_substract = columns.unsqueeze(-1) @ rows.unsqueeze(-2)
+        to_substract.mul_(diagonal_entries_signs)
+        return inverse_matrix - to_substract
 
 def quantize(x:torch.Tensor, scales:torch.Tensor, rounded_zeros:torch.Tensor, max_quantized_value:int) -> torch.Tensor:
     '''
