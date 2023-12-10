@@ -1,5 +1,5 @@
 import torch
-from typing import Union
+from _types import ScalesAndZeros
 
 from _checks import check_if_first_n_dims_match, check_if_square, check_if_ndim, check_if_same_ndim
 
@@ -87,7 +87,13 @@ def quantize(x:torch.Tensor, scales:torch.Tensor, rounded_zeros:torch.Tensor, ma
     quantized_x = (rounded_x + rounded_zeros).clamp(0, max_quantized_value)
     return scales * (quantized_x - rounded_zeros)
 
-def find_optimal_scales_and_zeros(matrix:torch.Tensor, max_quantized_value:int, *, grid_range:int=80, norm=2.4):
+def find_optimal_scales_and_zeros(
+    matrix:torch.Tensor, 
+    max_quantized_value:int, 
+    *, 
+    grid_range:int=80, 
+    norm=2.4
+) -> ScalesAndZeros:
     '''
     `matrix` is a tensor of shape (n_rows, n_cols)
     `max_quantized_value` is an integer = 2 ** n_bits - 1
@@ -134,4 +140,15 @@ def find_optimal_scales_and_zeros(matrix:torch.Tensor, max_quantized_value:int, 
         scales[rows_to_update] = shrunken_scales[rows_to_update]
         rounded_zeros[rows_to_update] = shrunken_rounded_zeros[rows_to_update]
 
-    return scales, rounded_zeros
+    return ScalesAndZeros(scales, rounded_zeros)
+
+def get_top_n_nonzero_indices(one_dim_tensor:torch.BoolTensor, top_n:int) -> torch.Tensor:
+    '''
+    - Input `one_dim_tensor` is a booleam tensor of shape `(n,)`
+    - Output is a tensor containing the indices of the top `top_n` elements of `one_dim_tensor` that are True.
+    Example: 
+    - if `one_dim_tensor` is `[True, False, True, True, False]` and `top_n` is 2, 
+    - the output is `[0, 2]` (top 2 indices of `one_dim_tensor` that are True)
+    '''
+    check_if_ndim(one_dim_tensor, 1)
+    return one_dim_tensor.nonzero(as_tuple=True)[0][:top_n]
