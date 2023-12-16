@@ -11,6 +11,9 @@ class ScalesAndZeros(BaseModel):
 # Output of `exact_obc._handle_zeros`
 Weights_Hessian_Tuple = Tuple[torch.Tensor, torch.Tensor]
 
+# Output of `exact_obc._get_inverse_hessian_and_mask_per_row`
+Hessian_Mask_MinZeros_Tuple = Tuple[torch.Tensor, torch.Tensor, int]
+
 # Output for quantized weights
 class QuantizedMatrix(BaseModel):
     quantized_matrix:torch.Tensor
