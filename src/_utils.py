@@ -91,7 +91,8 @@ def find_optimal_scales_and_zeros(
     matrix:torch.Tensor, 
     max_quantized_value:int, 
     *, 
-    grid_range:int=80, 
+    max_shrink:float = 0.8,
+    grid_range:int=100, 
     norm=2.4
 ) -> ScalesAndZeros:
     '''
@@ -119,7 +120,7 @@ def find_optimal_scales_and_zeros(
 
     distances_quantized_and_full_precision = torch.full((n_rows,), float('inf'), device=matrix.device)
 
-    for i in range(grid_range):
+    for i in range( int(max_shrink * grid_range) ):
         shrink_factor = 1 - i / grid_range
         shrunken_min_values_per_row = min_values_per_row * shrink_factor
         shrunken_max_values_per_row = max_values_per_row * shrink_factor
@@ -140,7 +141,7 @@ def find_optimal_scales_and_zeros(
         scales[rows_to_update] = shrunken_scales[rows_to_update]
         rounded_zeros[rows_to_update] = shrunken_rounded_zeros[rows_to_update]
 
-    return ScalesAndZeros(scales, rounded_zeros)
+    return ScalesAndZeros(scales=scales, rounded_zeros=rounded_zeros)
 
 def get_top_n_nonzero_indices(one_dim_tensor:torch.BoolTensor, top_n:int) -> torch.Tensor:
     '''
