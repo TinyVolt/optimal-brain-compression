@@ -130,7 +130,7 @@ def exact_obc(original_weights:torch.Tensor, hessian:torch.Tensor, n_bits:int, b
             arange = torch.arange(batch_of_rows.size(0), device=batch_of_rows.device)
             row_minimum_is_nonzero = batch_of_rows[arange, index_to_quantize_per_row] != 0
             outlier_rows = row_contains_outlier & row_minimum_is_nonzero
-            index_to_quantize_per_row[outlier_rows] = batch_of_scores[outlier_rows].argmax(dim=1)
+            index_to_quantize_per_row[outlier_rows] = squared_differences[outlier_rows].argmax(dim=1)
 
             quantized_element_per_row = batch_of_rows_quantized[arange, index_to_quantize_per_row]
             quantized_weights[arange + row_start_index, index_to_quantize_per_row] = quantized_element_per_row
