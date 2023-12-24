@@ -1,10 +1,11 @@
 import torch
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Tuple
 
 # Output of `_utils.find_optimal_scales_and_zeros`
 # `scales` and `rounded_zeros` are tensors of shape `(n_rows,)`
 class ScalesAndZeros(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     scales:torch.Tensor
     rounded_zeros:torch.Tensor
 
@@ -16,6 +17,7 @@ Hessian_Mask_MinZeros_Tuple = Tuple[torch.Tensor, torch.Tensor, int]
 
 # Output for quantized weights
 class QuantizedMatrix(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     quantized_matrix:torch.Tensor
     scales:torch.Tensor
     rounded_zeros:torch.Tensor

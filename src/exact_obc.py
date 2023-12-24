@@ -52,7 +52,7 @@ def _get_inverse_hessian_and_mask_per_row(batch_of_rows:torch.Tensor, hessian:to
     batch_of_hessians = hessian.unsqueeze(0).repeat(batch_size, 1, 1)
     batch_of_masks = torch.BoolTensor(batch_of_rows.shape, device=batch_of_rows.device)
     # `min_zeros_per_row` has shape `(batch_size,)`
-    min_zeros_per_row = (batch_of_rows == 0).float().sum(dim=1).min().item()
+    min_zeros_per_row = (batch_of_rows == 0).float().sum(dim=1).min().long().item()
     '''
     At this point, we don't have _the_ hessian matrix, but _a_ hessian matrix for each row in `batch_of_rows`. 
     We modify each hessian matrix based on each row. 
@@ -82,7 +82,7 @@ def exact_obc(original_weights:torch.Tensor, hessian:torch.Tensor, n_bits:int, b
     check_if_ndim(hessian, 2)
     check_if_square(hessian)
 
-    n_rows, n_cols = weights.shape
+    n_rows, n_cols = original_weights.shape
     weights = original_weights.float().clone()
     weights, hessian = _handle_zeros(weights, hessian)
 
@@ -156,5 +156,5 @@ def exact_obc(original_weights:torch.Tensor, hessian:torch.Tensor, n_bits:int, b
             # (batch_size, n_cols, 1) @ (batch_size, 1, n_cols) -> (batch_size, n_cols, n_cols)
             batch_of_inverse_hessians -= i_th_column_per_hessian.unsqueeze(2) @ i_th_column_per_hessian.unsqueeze(1)
 
-    return QuantizedMatrix(quantized_weights, scales_per_row, rounded_zeros_per_row)
+    return QuantizedMatrix(quantized_matrix=quantized_weights, scales=scales_per_row, rounded_zeros=rounded_zeros_per_row)
 
