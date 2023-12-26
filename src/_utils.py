@@ -1,7 +1,7 @@
 import torch
-from _types import ScalesAndZeros
+from ._types import ScalesAndZeros
 
-from _checks import check_if_first_n_dims_match, check_if_square, check_if_ndim, check_if_same_ndim
+from ._checks import check_if_first_n_dims_match, check_if_square, check_if_ndim, check_if_same_ndim
 
 def invert_spd_matrix(matrix:torch.Tensor) -> torch.Tensor:
     '''

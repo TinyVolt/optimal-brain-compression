@@ -1,7 +1,7 @@
 import torch
-from _checks import check_if_square, check_if_ndim
-from _utils import invert_spd_matrix, find_optimal_scales_and_zeros, get_top_n_nonzero_indices, quantize
-from _types import Weights_Hessian_Tuple, QuantizedMatrix, Hessian_Mask_MinZeros_Tuple
+from ._checks import check_if_square, check_if_ndim
+from ._utils import invert_spd_matrix, find_optimal_scales_and_zeros, get_top_n_nonzero_indices, quantize
+from ._types import Weights_Hessian_Tuple, QuantizedMatrix, Hessian_Mask_MinZeros_Tuple
 
 def _handle_zeros(weights:torch.Tensor, hessian:torch.Tensor) -> Weights_Hessian_Tuple:
     '''
