@@ -1,6 +1,3 @@
-import os
-
-import pkg_resources
 from setuptools import setup, find_packages
 
 setup(
