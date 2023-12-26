@@ -10,6 +10,6 @@ setup(
     description="Unofficial implementation of the Optimal Brain Compression algorithm",
     author="Vinay Sisodia",
     packages=find_packages(exclude=["tests*"]),
-    install_requires=["torch"],
+    install_requires=["torch", "pydantic"],
     include_package_data=True,
 )
