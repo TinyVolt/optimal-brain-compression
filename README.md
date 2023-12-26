@@ -60,20 +60,26 @@ I think the paper has a bunch of interesting ideas.
 - Proof for equations 3 and 7 in the paper:
 
 If $f$ if a function parameterized by a vector of weights $W$, Taylor's expansion gives us (assuming $\nabla W = 0$ for a trained model):
+
 $$ f(W + dW) - f(W) = \nabla W.dW + \frac{1}{2}(dW)^TH(dW) =  \frac{1}{2}(dW)^TH(dW) $$
+
 where $1_p$ is the one hot vector for index $p$.
 
 Let's say you want to set the element at index $p$ of $W$ denoted by $w_p$ to a constant $c$. In other words we want $(dW)_p + w_p = c$ which can be re-written as:
+
 $$ 1_p^T.(dW) + w_p = c $$
 
-We want to minimize $f(W + dW) - f(W) = \frac{1}{2}(dW)^TH(dW) \coloneqq F $ subject to the constraint $ G = 1_p^T.(dW) + w_p - c = 0 $. Using Lagrange multipliers, we have:
+We want to minimize $f(W + dW) - f(W) = \frac{1}{2}(dW)^TH(dW) \coloneqq F$ subject to the constraint $G = 1_p^T.(dW) + w_p - c = 0$. Using Lagrange multipliers, we have:
+
 $$ \nabla F = H.(dW), \nabla G = 1_p $$
+
 $$ \nabla F = \lambda \nabla G \Rightarrow H.(dW) = \lambda 1_p \Rightarrow dW = \lambda H^{-1}1_p $$
 
 Using this value in $G$ gives us:
+
 $$ 1_p^T(\lambda)H^{-1}1_p + w_p - c = 0 \Rightarrow \lambda = \frac{c - w_p}{H^{-1}_{pp}} $$
 
-where $ {H^{-1}_{pp}} $ is the $p$-th diagonal value of $H^{-1}$. 
+where ${H^{-1}_{pp}}$ is the $p$-th diagonal value of $H^{-1}$. 
 
 This gives us:
 
