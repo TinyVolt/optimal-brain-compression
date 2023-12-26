@@ -107,7 +107,7 @@ def exact_obc(original_weights:torch.Tensor, hessian:torch.Tensor, n_bits:int, b
         # `batch_of_inverse_hessians.shape` = `(batch_size, n_cols, n_cols)`, `batch_of_masks.shape` = `(batch_size, n_cols)`
         batch_of_inverse_hessians, batch_of_masks, min_zeros_per_row = _get_inverse_hessian_and_mask_per_row(batch_of_rows, hessian)
 
-        for column_index in range(min_zeros_per_row, n_cols):
+        for _ in range(min_zeros_per_row, n_cols):
             batch_of_rows_quantized = quantize(batch_of_rows, batch_of_scales_per_row, batch_of_rounded_zeros_per_row, max_quantized_value)
             squared_differences = (batch_of_rows_quantized - batch_of_rows).pow(2)
             # `batch_of_inverse_hessian_diagonals.shape` = `(batch_size, n_cols)`
