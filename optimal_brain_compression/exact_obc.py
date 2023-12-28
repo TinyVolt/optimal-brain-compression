@@ -50,7 +50,7 @@ def _get_inverse_hessian_and_mask_per_row(batch_of_rows:torch.Tensor, hessian:to
     # create a copy of `hessian` for each row in `batch_of_rows`
     # `batch_of_hessians.shape` is `(batch_size, n_cols, n_cols)`
     batch_of_hessians = hessian.unsqueeze(0).repeat(batch_size, 1, 1)
-    batch_of_masks = torch.BoolTensor(batch_of_rows.shape, device=batch_of_rows.device)
+    batch_of_masks = torch.zeros_like(batch_of_rows, dtype=torch.bool, device=batch_of_rows.device)
     # `min_zeros_per_row` has shape `(batch_size,)`
     min_zeros_per_row = (batch_of_rows == 0).float().sum(dim=1).min().long().item()
     '''
